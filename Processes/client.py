@@ -49,7 +49,6 @@ def connect_mode(client_socket):
     print(f'\n...Sending Connection Request...')
     client_socket.send(bytes(peer_ip, "utf-8"))
     client_socket.send(bytes(peer_port, "utf-8"))
-    print(f'Port sent ---> {peer_port}')
     print(f'\n...Connection Established...')
     print(f'\n...Wait for the chat window to open...')
     time.sleep(3)
