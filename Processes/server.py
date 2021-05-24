@@ -3,43 +3,59 @@ import sys
 import os
 import threading
 
-Recv_Terminated = False
-Send_Terminated = False
+isTerminated = False
 
-def recv_msg(Client_Socket,address):
-    global Recv_Terminated
-    global Send_Terminated
-    Recv_Message = ""
-    while Recv_Message != 'q':
-        if Send_Terminated == False:
-            Recv_Message = str(Client_Socket.recv(1024).decode('utf-8'))
-            if Recv_Message == 'q':
-                print(f'\nConnection with client {address} is now terminated.')
-                Client_Socket.send(bytes('q', "utf-8"))
-                Recv_Terminated = True
-                break
-            print(f'\nMessage recieved from client {address}  --->  {Recv_Message}\n>>')
-        else:
+def API(first_peer, second_peer, current_peer_context):
+    global isTerminated
+    recv_message = " "
+    while recv_message != 'q':
+        if isTerminated == True:
             break
+        if current_peer_context == 'first':
+            recv_message = str(first_peer.recv(1024).decode('utf-8')) 
+            # recv from client # 1
+            second_peer.send(bytes(recv_message, "utf-8"))            
+            # send received message to client # 2
+        elif current_peer_context == 'second':
+            recv_message = str(second_peer.recv(1024).decode('utf-8')) 
+            # recv from client # 2
+            first_peer.send(bytes(recv_message, "utf-8"))              
+            # send received message to client # 1
+    isTerminated = True
+    first_peer.close()
+    second_peer.close()
 
 
-Server_Socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-Server_Socket.bind(('127.0.0.1', int(sys.argv[1]) ))
-Server_Socket.listen(10)
+clients_list = []
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_socket.bind(('127.0.0.1', int(sys.argv[1]) ))
+server_socket.listen(10)
 print("Server started listening on port # " + str(sys.argv[1]) )
 print("Note: Enter 'q' to terminate connections")
 while True:
-    Client_Socket, address = Server_Socket.accept()
+    first_peer, client_information = server_socket.accept()
+    clients_list.append(client_information)
     if os.fork() == 0 :
-        Server_Socket.close() 
-        print(f'\nConnected with client {address}')
-        Recv_Thread = threading.Thread(target=recv_msg, args=(Client_Socket,address))
-        Recv_Thread.start()
-        Send_Message = ""
-        while Send_Message != 'q':
-            if Recv_Terminated == True:
-                break
-            Send_Message = input(f'\nSend a message to the client {address}\n>>')
-            Client_Socket.send(bytes(Send_Message, "utf-8"))
-        Send_Terminated = True
-        Client_Socket.close()
+        server_socket.close() 
+        print(f'\nServer got a new connection with ip {client_information[0]} and port {client_information[1]}')
+
+        while True:
+            mode = str(first_peer.recv(1024).decode("utf-8"))
+            if mode == 'connect':
+                first_peer.send(bytes(str(clients_list), "utf-8"))
+                second_peer_ip = '' 
+                second_peer_port = ''
+                second_peer_ip = str(first_peer.recv(1024).decode("utf-8"))
+                second_peer_port = str(first_peer.recv(1024).decode("utf-8"))
+                second_peer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                try:
+                    second_peer.connect((second_peer_ip, int(second_peer_port) ))
+                    first_peer_thread = threading.Thread(target=API, args=(first_peer, second_peer, 'first'))
+                    first_peer_thread.start()
+                    second_peer_thread = threading.Thread(target=API, args=(first_peer, second_peer, 'second'))
+                    second_peer_thread.start()
+                except socket.error as msg:
+                    print(f'Socket Error: {msg}')
+
+            if mode == 'wait':
+                first_peer.send(bytes(str(client_information[0]), "utf-8"))
