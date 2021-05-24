@@ -37,7 +37,7 @@ while True:
     clients_list.append(client_information)
     if os.fork() == 0 :
         server_socket.close() 
-        print(f'\nServer got a new connection with ip {client_information[0]} and port {client_information[1]}')
+        print(f"\nServer got a new connection with ip {client_information[0]} and port {client_information[1]}")
 
         while True:
             mode = str(first_peer.recv(1024).decode("utf-8"))
@@ -48,9 +48,6 @@ while True:
                 second_peer_ip = str(first_peer.recv(1024).decode("utf-8"))
                 second_peer_port = str(first_peer.recv(1024).decode("utf-8"))
                 second_peer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                print(second_peer_port)
-                print(second_peer_ip)
-                input()
                 try:
                     second_peer.connect((second_peer_ip, int(second_peer_port) ))
                     first_peer_thread = threading.Thread(target=API, args=(first_peer, second_peer, 'first'))

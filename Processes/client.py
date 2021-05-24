@@ -21,7 +21,6 @@ def recv_msg(client_socket):
             print(f'\nMessage recieved from peer  --->  {recv_message}\n>>')
         else:
             break
-    client_socket.close()
 
 def chat(client_socket, mode):
     os.system('clear')
@@ -48,10 +47,12 @@ def connect_mode(client_socket):
     print(f'\n...Establishing Connection...')
     print(f'\n...Sending Connection Request...')
     client_socket.send(bytes(peer_ip, "utf-8"))
+    time.sleep(1)
     client_socket.send(bytes(peer_port, "utf-8"))
+    print(f'Connecting with {peer_ip} on port {peer_port}')
+    time.sleep(10)
     print(f'\n...Connection Established...')
     print(f'\n...Wait for the chat window to open...')
-    time.sleep(3)
     chat(client_socket, 'connect')
 
 def wait_connection_mode(client_ip, client_port):
@@ -63,7 +64,7 @@ def wait_connection_mode(client_ip, client_port):
     peer, peer_information = server_socket.accept()
     print(f'Connected with peer {peer_information[0]} {peer_information[1]}')
     print(f'...wait for the chat window to open...')
-    time.sleep(3)
+    time.sleep(10)
     chat(peer, 'wait')
     peer.close()
 
