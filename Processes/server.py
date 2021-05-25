@@ -2,9 +2,25 @@ import socket
 import sys
 import os
 import threading
+import time
+
+
+def file_transfer(first_peer, second_peer):
+    file_name = str(first_peer.recv(1024).decode("utf-8"))
+    time.sleep(1)
+    file_size = str(first_peer.recv(1024).decode("utf-8"))
+    time.sleep(1)
+    file_data = str(first_peer.recv(int(file_size)).decode("utf-8")) 
+    print(f'file_name --> {file_name} file_size --> {file_size} file_data --> {file_data}')
+    second_peer.send(bytes(file_name, "utf-8"))
+    time.sleep(1)
+    second_peer.send(bytes(file_size, "utf-8"))
+    time.sleep(1)
+    second_peer.send(bytes(file_data, "utf-8")) 
+
+
 
 isTerminated = False
-
 def API(first_peer, second_peer, current_peer_context):
     global isTerminated
     recv_message = " "
@@ -12,15 +28,31 @@ def API(first_peer, second_peer, current_peer_context):
         if isTerminated == True:
             break
         if current_peer_context == 'first':
-            recv_message = str(first_peer.recv(1024).decode('utf-8')) 
+            recv_message = str(first_peer.recv(1024).decode("utf-8")) 
+            time.sleep(1)
             # recv from client # 1
-            second_peer.send(bytes(recv_message, "utf-8"))            
+            if recv_message == "file":
+                print('Recv message ---> file')
+                second_peer.send(bytes("...Recieving a file from peer...", "utf-8"))  
+                time.sleep(1)
+                file_transfer(first_peer, second_peer)
+            else:
+                second_peer.send(bytes(recv_message, "utf-8"))            
             # send received message to client # 2
         elif current_peer_context == 'second':
-            recv_message = str(second_peer.recv(1024).decode('utf-8')) 
+            recv_message = str(second_peer.recv(1024).decode("utf-8")) 
+            time.sleep(1)
             # recv from client # 2
-            first_peer.send(bytes(recv_message, "utf-8"))              
+            if recv_message == "file":
+                print('Recv message ---> file')
+                first_peer.send(bytes("...Recieving a file from peer...", "utf-8")) 
+                time.sleep(1)
+                file_transfer(second_peer, first_peer)
+            else:
+                first_peer.send(bytes(recv_message, "utf-8"))     
+                time.sleep(1)         
             # send received message to client # 1
+
     isTerminated = True
     first_peer.close()
     second_peer.close()
