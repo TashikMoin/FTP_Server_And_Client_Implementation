@@ -30,6 +30,7 @@ def API(first_peer, second_peer, current_peer_context):
         if current_peer_context == 'first':
             recv_message = str(first_peer.recv(1024).decode("utf-8")) 
             time.sleep(1)
+            print(f'Received data ----> {recv_message}')
             # recv from client # 1
             if recv_message == "file":
                 print('Recv message ---> file')
@@ -42,6 +43,7 @@ def API(first_peer, second_peer, current_peer_context):
         elif current_peer_context == 'second':
             recv_message = str(second_peer.recv(1024).decode("utf-8")) 
             time.sleep(1)
+            print(f'Received data ----> {recv_message}')
             # recv from client # 2
             if recv_message == "file":
                 print('Recv message ---> file')

@@ -24,10 +24,13 @@ def recv_msg(client_socket):
                 print("...Receiving File...")
                 file_name = str(client_socket.recv(1024).decode("utf-8"))
                 time.sleep(1)
+                print("Here 1")
                 file_size = str(client_socket.recv(1024).decode("utf-8"))
                 time.sleep(1)
+                print("Here 2")
                 data = str(client_socket.recv(int(file_size)).decode("utf-8"))
                 time.sleep(1)
+                print("Here 3")
                 print(f'peer # 2 received file_name --> {file_name}  file_size --> {file_size}  file_data --> {data}')
                 file_name = os.getcwd() + '/server_files/' + file_name
                 print(file_name)
