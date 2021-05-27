@@ -34,6 +34,8 @@ def API(first_peer, second_peer, current_peer_context):
 
 clients_list = []
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+# helps in fast and separate non concatenated sending and recieving of data.
 server_socket.bind(('127.0.0.1', int(sys.argv[1]) ))
 server_socket.listen(10)
 print("Server listening on port # " + str(sys.argv[1]) )
@@ -52,8 +54,10 @@ while True:
                 second_peer_ip = '' 
                 second_peer_port = ''
                 second_peer_ip = str(first_peer.recv(1024).decode("utf-8"))
+                first_peer.settimeout(2)
                 second_peer_port = str(first_peer.recv(1024).decode("utf-8"))
                 second_peer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                second_peer.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
                 try:
                     second_peer.connect((second_peer_ip, int(second_peer_port) ))
                     first_peer_thread = threading.Thread(target=API, args=(first_peer, second_peer, 'first'))
@@ -70,6 +74,7 @@ while True:
                 file_name = first_peer.recv(1024).decode("utf-8")
                 file_data = bytes()
                 first_peer.settimeout(5) # setting recv timeout
+                start = time.time()
                 while True:
                     try:
                         data = first_peer.recv(1024)
@@ -80,10 +85,13 @@ while True:
                 with open("server_files/"+file_name, "wb") as file:
                     file.write(file_data)
                     file.close()
+                stop = time.time()
+                print(f'{file_name} took {stop-start} seconds for downloading from peer to server.')
                 
 
             elif mode == 'file download':
                 file_name = first_peer.recv(1024).decode("utf-8")
+                start = time.time()
                 with open("server_files/"+file_name, "rb") as file:
                     file_data = file.read()
                     first_peer.send(file_data)
@@ -91,3 +99,6 @@ while True:
                     time.sleep(5)
                     print(f'{file_name} is sent successfully')
                     file.close()
+                stop = time.time()
+                print(f'{file_name} took {stop-start} seconds to send file to the peer from server.')
+                

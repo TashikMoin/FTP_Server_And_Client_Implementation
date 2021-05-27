@@ -18,9 +18,9 @@ def recv_msg(client_socket):
                 print(f'\nConnection terminated.')
                 recv_terminated = True
                 break
-            print(f'\nMessage recieved from peer  --->  {recv_message}\n>>')
-        except socket.error as msg:
-            print(f'Socket Error: {msg}')
+            print(f'\nMessage recieved from peer  --->  {recv_message}')
+        except socket.timeout as msg:
+            continue
 
 def chat(client_socket, mode):
     os.system('clear')
@@ -57,6 +57,8 @@ def connect_mode(client_socket):
 def wait_connection_mode(client_ip, client_port):
     os.system('clear')
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1) 
+    # helps in fast and separate non concatenated sending and recieving of data.
     server_socket.bind((client_ip, int(client_port) ))
     server_socket.listen(10)
     print(f'...Waiting for the connection...')
@@ -71,6 +73,7 @@ def wait_connection_mode(client_ip, client_port):
 
 
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 client_socket.connect((sys.argv[1], int(sys.argv[2])) )
 while True:
     os.system('clear')
@@ -100,10 +103,11 @@ while True:
         client_socket.send(bytes(file_name, "utf-8"))
         with open(file_name, "rb") as file:
             file_data = file.read()
-            client_socket.send(file_data)
             print(f'...Uploading file...')
-            time.sleep(5)
-            print(f'{file_name} is uploaded successfully')
+            start = time.time()
+            client_socket.send(file_data)
+            stop = time.time()
+            print(f'{file_name} took {stop-start} seconds to upload.')
             file.close()
 
 
@@ -116,6 +120,7 @@ while True:
         print(f'\n...Downloading file from the server...')
         print(f'...Please wait...')
         client_socket.settimeout(5) # setting recv timeout
+        start = time.time()
         while True:
             try:
                 data = client_socket.recv(1024)
@@ -126,4 +131,6 @@ while True:
         with open(file_name, "wb") as file:
             file.write(file_data)
             file.close()
+        stop = time.time()
+        print(f'{file_name} took {stop-start} seconds to download from the server.')
             
