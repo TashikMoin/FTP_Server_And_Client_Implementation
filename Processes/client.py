@@ -98,9 +98,9 @@ while True:
         client_socket.send(bytes('file upload', "utf-8"))
         file_name = input('\nEnter file name :')
         client_socket.send(bytes(file_name, "utf-8"))
-        with open(file_name, 'r') as file:
+        with open(file_name, "rb") as file:
             file_data = file.read()
-            client_socket.send(bytes(file_data, "utf-8"))
+            client_socket.send(file_data)
             print(f'...Uploading file...')
             time.sleep(5)
             print(f'{file_name} is uploaded successfully')
@@ -112,22 +112,18 @@ while True:
         client_socket.send(bytes('file download', "utf-8"))
         file_name = input('\nEnter file name :')
         client_socket.send(bytes(file_name, "utf-8"))
-        file_data = ""
-        client_socket.settimeout(5) # setting recv timeout
+        file_data = bytes()
         print(f'\n...Downloading file from the server...')
         print(f'...Please wait...')
+        client_socket.settimeout(5) # setting recv timeout
         while True:
-            try: 
-                data = client_socket.recv(1024).decode("utf-8")
+            try:
+                data = client_socket.recv(1024)
                 file_data = file_data + data
             except socket.timeout:  # run when recv timeout expires
                 break
         client_socket.settimeout(None)
-        with open(file_name, 'w') as file:
+        with open(file_name, "wb") as file:
             file.write(file_data)
             file.close()
-
-
-
-    
-    
+            

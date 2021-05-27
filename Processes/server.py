@@ -39,8 +39,6 @@ server_socket.listen(10)
 print("Server listening on port # " + str(sys.argv[1]) )
 print("Note: Enter 'q' to terminate connections")
 while True:
-    print("Server listening on port # " + str(sys.argv[1]) )
-    print("Note: Enter 'q' to terminate connections")
     first_peer, client_information = server_socket.accept()
     clients_list.append(client_information)
     if os.fork() == 0 :
@@ -70,27 +68,26 @@ while True:
 
             elif mode == 'file upload':
                 file_name = first_peer.recv(1024).decode("utf-8")
-                file_data = ""
+                file_data = bytes()
                 first_peer.settimeout(5) # setting recv timeout
                 while True:
-                    try: 
-                        data = first_peer.recv(1024).decode("utf-8")
+                    try:
+                        data = first_peer.recv(1024)
                         file_data = file_data + data
                     except socket.timeout:  # run when recv timeout expires
                         break
                 first_peer.settimeout(None)
-                with open("server_files/"+file_name, 'w') as file:
+                with open("server_files/"+file_name, "wb") as file:
                     file.write(file_data)
                     file.close()
-                    os.system('clear')
+                
 
             elif mode == 'file download':
                 file_name = first_peer.recv(1024).decode("utf-8")
-                with open("server_files/"+file_name, "r") as file:
+                with open("server_files/"+file_name, "rb") as file:
                     file_data = file.read()
-                    first_peer.send(bytes(file_data, "utf-8"))
+                    first_peer.send(file_data)
                     print(f'...Sending file to client {client_information[0]} {client_information[1]}...')
                     time.sleep(5)
                     print(f'{file_name} is sent successfully')
                     file.close()
-                    os.system('clear')
